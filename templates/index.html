@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Прогноз погоды</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/weather-icons.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/weather-icons-wind.min.css') }}">
+</head>
+<body>    
+    <nav class="navbar navbar-inverse navbar-static-top">
+        <div class="container-fluid">
+            <div class="navbar-collapse collapse">
+                <form class="navbar-form navbar-left" id="search-form">
+                    <div class="input-group">
+                        <span class="input-group-btn">
+                            <input class="form-control" name="city" id="city-input" placeholder="Введите город для поиска">
+                            <button class="btn btn-default"><i class="fa fa-search"></i></button>
+                        </span>
+                    </div>
+                    <a href="" id="caret-down">
+                        <i class="fa fa-caret-down"></i>
+                    </a>
+                </form>
+                <form class="navbar-form navbar-left" id="coord-form">
+                    <input class="form-control" name="lat" placeholder="Широта">
+                    <input class="form-control" name="lon" placeholder="Долгота">
+                    <button class="btn btn-default" id="coord"><i class="fa fa-search"></i></button>
+                    <a href="" id="caret-up"><i class="fa fa-caret-up"></i></a>
+                </form>
+                
+                <ul class="nav navbar-nav navbar-right" id="settings">
+                    <li><a href="" onclick="return false">
+                        <span>{{ data['city']['name'] }}</span>
+                        <span>{{ data['city']['country'] }}</span>
+                    </a></li>
+                    <li><a href="" onclick="return false"><i class="fa fa-map-marker"></i></a></li>
+                    <li><a href="" onclick="return false"><i class="wi wi-celsius"></i></a></li>
+                    <li><a href="" onclick="return false"><i class="wi wi-fahrenheit"></i></a></li>
+                </div>
+            </div>
+        </div>
+    </nav>
+    <ul id="search-tips"></ul>
+
+    <div class="container">
+        <div class="flex-container">
+            {% for weather in data.weather %}
+                <div class="flex-block" id="weather-{{ loop.index0 }}">
+                    <i class="icon {{ weather.icon }}"></i><br>
+                    <div class="daily-weather">
+                        <span class="date">{{ weather.date }}</span><br>
+                        <span class="temp">{{ weather.temp }}</span><br>
+                        <span class="weather">{{ weather.description }}</span>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <div id="weather">
+            {% for weather in data.weather %}
+                {% set head=['<tr><th></th>'] %}
+                {% set temp=['<tr><th>Температура, <i class="wi wi-%s"></i></th>'|format(units)] %}
+                {% set pressure=['<tr><th>Давление</th>'] %}
+                {% set humidity=['<tr><th>Влажность, %</th>'] %}
+                {% set cloud=['<tr><th>Облачность, %</th>'] %}
+                {% set wind=['<tr><th>Ветер</th>'] %}
+
+                {% for forecast in weather.list %}
+                    {% do head.append('<td>%s<i class="%s"> </i></td>'|format(forecast.time, forecast.weather[0].icon)) %}
+                    {% do temp.append('<td>%s</td>'|format(forecast.main.temp)) %}
+                    {% do pressure.append('<td>%s</td>'|format(forecast.main.pressure)) %}
+                    {% do humidity.append('<td>%s</td>'|format(forecast.main.humidity)) %}
+                    {% do cloud.append('<td>%s</td>'|format(forecast.clouds.all)) %}
+                    {% do wind.append('<td>%s <i class="wi wi-wind towards-%s-deg"></i></td>'|format(forecast.wind.speed, forecast.wind.deg)) %}
+                {% endfor %}
+
+                {% do head.append('</tr>') %}
+                {% do temp.append('</tr>') %}
+                {% do pressure.append('</tr>') %}
+                {% do humidity.append('</tr>') %}
+                {% do cloud.append('</tr>') %}
+                {% do wind.append('</tr>') %}
+
+                <div class="row">
+                    <table class="table" id="table-{{ loop.index0 }}">
+                        {{ head|join|safe }}
+                        {{ temp|join|safe }}
+                        {{ pressure|join|safe }}
+                        {{ humidity|join|safe }}
+                        {{ cloud|join|safe }}
+                        {{ wind|join|safe }}
+                    </table>
+                </div>
+            {% endfor %}
+        </div>
+
+        <div class="row"><div id="map"></div></div>
+
+    </div>
+
+    <script>
+      function initMap() {
+        var uluru = {lat: {{ data.city.coord.lat }}, lng: {{ data.city.coord.lon }}};
+        var map = new google.maps.Map(document.getElementById('map'), {
+          zoom: 12,
+          center: uluru
+        });
+        var marker = new google.maps.Marker({
+          position: uluru,
+          map: map
+        });
+      }
+    </script>
+    <script async defer
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC_LovXq4rVZu1eozpmjZPFj7SMouFXMeI&callback=initMap">
+    </script>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <script src="https://use.fontawesome.com/61e6440265.js"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
